@@ -1,0 +1,103 @@
+﻿@page "/"
+@namespace Blazor3dTemp.Pages
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <base href="~/" />
+    <title>블레이저타이틀</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no, user-scalable=no" />
+    <link href="https://fonts.googleapis.com/css?family=Courgette|Playfair+Display&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/bootstrap.min.css">
+    <link href="css/site.css" rel="stylesheet" />
+</head>
+<body class="g-sidenav-show bg-gray-100">
+    @{
+        var isIEOrEdgeLegacy = Request.Headers["User-Agent"]
+        .Any(userAgent => userAgent.Contains("MSIE") || userAgent.Contains("Trident") || userAgent.Contains("Edge/"));
+    }
+    @if (isIEOrEdgeLegacy)
+    {
+        <component type="typeof(Blazor3dTemp.Shared.BrowserNotSupported)" render-mode="Static" />
+    }
+    else
+    {
+        <component type="typeof(App)" render-mode="ServerPrerendered" />
+
+        <div id="blazor-error-ui">
+            <environment include="Staging,Production">
+                오류가 발생했습니다. 이 응용 프로그램은 다시 로드할 때까지 더 이상 응답하지 않을 수 있습니다.
+            </environment>
+            <environment include="Development">
+                처리되지 않은 예외가 발생했습니다. 자세한 내용은 브라우저 개발 도구를 참조하세요.
+            </environment>
+            <a href="" class="reload">새로고침</a>
+            <a class="dismiss">X</a>
+        </div>
+
+        <script src="_framework/blazor.server.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/web-animations/2.3.2/web-animations-next.min.js"></script> //Groupeffect
+    }
+    <script>
+
+        let dotnet;
+        function savedotnet(dotnetobj) {
+            dotnet = dotnetobj;
+        }
+
+        function statehaschange(){
+            dotnet.invokeMethodAsync('StateHasChange');
+        }
+
+        let pageCount = 0;
+
+        function getTarget(elem, className){
+            while (!elem.classList.contains(className)) {
+                elem = elem.parentNode;
+
+                if (elem.nodeName == 'BODY') {
+                    elem = null;
+                    return;
+                }
+            }
+
+            return elem;
+        }
+
+        function closeLeaflet() {
+            let pageElems = document.querySelectorAll('.page');
+            pageCount = 0;
+            document.body.classList.remove('leaflet-opened');
+            pageElems[2].classList.remove('page-flipped');
+            setTimeout(() => {
+                pageElems[0].classList.remove('page-flipped');
+            }, 500);
+        }
+
+        function firstset(){
+           let leaflet = document.querySelector('.leaflet');
+           leaflet.addEventListener('click', e =>{
+               let pageElem = getTarget(e.target,'page');
+               if(pageElem){
+                   pageElem.classList.add('page-flipped');
+                   pageCount++;
+               }
+
+                if(pageCount == 2){
+                    document.body.classList.add("leaflet-opened");
+                }
+
+               let closeBtnElem = getTarget(e.target, 'close-btn');
+               if(closeBtnElem){
+                    closeLeaflet();
+               }
+           }); 
+        }
+    </script>
+</body>
+</html>
