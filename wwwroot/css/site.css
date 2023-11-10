@@ -162,8 +162,12 @@ body {
         transition: 1s;
     }
 
-.zoom-in .hand img {
-    transform: scale(2);
+.zoom-in  {
+    transform: scale(1);
+}
+
+.hand img {
+    transform: scale(1);
 }
 
 .leaflet {

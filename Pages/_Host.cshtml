@@ -11,12 +11,12 @@
     <base href="~/" />
     <title>블레이저타이틀</title>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no, user-scalable=no" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no, user-scalable=yes" />
     <link href="https://fonts.googleapis.com/css?family=Courgette|Playfair+Display&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/bootstrap.min.css">
     <link href="css/site.css" rel="stylesheet" />
 </head>
-<body class="g-sidenav-show bg-gray-100">
+<body>
     @{
         var isIEOrEdgeLegacy = Request.Headers["User-Agent"]
         .Any(userAgent => userAgent.Contains("MSIE") || userAgent.Contains("Trident") || userAgent.Contains("Edge/"));
@@ -55,6 +55,13 @@
         }
 
         let pageCount = 0;
+        let currentMenu;
+        let leaflet;
+        let handPos = { x: 0, y: 0 };
+        let targetPos = { x: 0, y: 0 };
+        let distX;
+        let distY;
+        let hand = document.querySelector('.hand');
 
         function getTarget(elem, className){
             while (!elem.classList.contains(className)) {
@@ -79,10 +86,73 @@
             }, 500);
         }
 
-        function firstset(){
-           let leaflet = document.querySelector('.leaflet');
+        function zoomIn(elem) {
+            let rect = elem.getBoundingClientRect();
+            let dx = window.innerWidth / 2 - (rect.x + rect.width / 2);
+            let dy = window.innerHeight / 2 - (rect.y + rect.height / 2);
+            let angle;
+
+            switch (elem.parentNode.parentNode.parentNode.dataset.page * 1) {
+                case 1:
+                    angle = -30;
+                    //elem.parentNode.parentNode.parentNode.style.transform = 'rotateY(-180deg)';
+                    break;
+                case 2:
+                    angle = 0;
+                    break;
+                case 3:
+                    angle = 30;
+                    //elem.parentNode.parentNode.parentNode.style.transform = 'rotateY(180deg)';
+                    break;
+            }
+
+            document.body.classList.add('zoom-in');
+            leaflet.style.transform = `translate3d(${dx}px, ${dy}px, 50vw) rotateY(${angle}deg)`;
+            currentMenu = elem;
+            currentMenu.classList.add('current-menu');
+        }
+
+        function zoomOut() {
+            //switch (elem.parentNode.parentNode.parentNode.dataset.page * 1) {
+            //    case 1:
+            //        elem.parentNode.parentNode.parentNode.style.transform = '';
+            //        break;
+            //    case 2:
+            //        break;
+            //    case 3:
+            //        elem.parentNode.parentNode.parentNode.style.transform = '';
+            //        break;
+            //}
+            leaflet.style.transform = 'translate3d(0, 0, 0)';
+            if (currentMenu) {
+                document.body.classList.remove('zoom-in');
+                currentMenu.classList.remove('current-menu');
+                currentMenu = null;
+            }
+        }
+
+        function render() {
+            distX = targetPos.x - handPos.x;
+            distY = targetPos.y - handPos.y;
+            handPos.x = handPos.x + distX * 0.1;
+            handPos.y = handPos.y + distY * 0.1;
+            hand.style.transform = `translate(${handPos.x - 60}px, ${handPos.y + 30}px)`;
+            //console.log(handPos.x + "/" + handPos.y);
+            requestAnimationFrame(render);
+        }
+
+
+        function firstset() {
+            leaflet = document.querySelector('.leaflet');
+            //render();
+            //window.addEventListener('mousemove', e => {
+            //    targetPos.x = e.clientX - window.innerWidth * 0.7;
+            //    targetPos.y = e.clientY - window.innerHeight * 0.7;
+            //});
            leaflet.addEventListener('click', e =>{
-               let pageElem = getTarget(e.target,'page');
+                let pageElem = getTarget(e.target, 'page');
+                let closeBtnElem = getTarget(e.target, 'close-btn');
+                let menuItemElem = getTarget(e.target, 'menu-item');
                if(pageElem){
                    pageElem.classList.add('page-flipped');
                    pageCount++;
@@ -92,11 +162,28 @@
                     document.body.classList.add("leaflet-opened");
                 }
 
-               let closeBtnElem = getTarget(e.target, 'close-btn');
                if(closeBtnElem){
                     closeLeaflet();
+                    zoomOut();
                }
-           }); 
+
+                if (menuItemElem) {
+                    // 추가 코드: 줌인된 상태에서는 동작하지 않도록 zoom-in 클래스를 체크
+                    if (!document.body.classList.contains('zoom-in')) {
+                        zoomIn(menuItemElem);
+                    }
+                }
+
+                let backBtn = getTarget(e.target, 'back-btn');
+                if (backBtn) {
+                    zoomOut();
+                }
+           });
+
+           //확대 애니메이션이랑 충돌나기때문
+            leaflet.addEventListener('animationend', () => {
+                leaflet.style.animation = 'none';
+            });
         }
     </script>
 </body>
